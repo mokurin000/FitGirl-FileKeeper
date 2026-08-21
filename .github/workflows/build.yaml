@@ -73,8 +73,8 @@ jobs:
 
                       print(f"## {label}")
                       print()
-                      print("| Architecture | Linux | macOS | Windows 10 |")
-                      print("|--------------|-------|-------|------------|")
+                      print("| Architecture | Linux | macOS | Windows |")
+                      print("|--------------|-------|-------|---------|")
                       print(f"| x86_64 | {row_x86.get('Linux', '-')} | {row_x86.get('macOS', '-')} | {row_x86.get('Windows', '-')} |")
                       print(f"| arm64  | {row_arm.get('Linux', '-')} | {row_arm.get('macOS', '-')} | {row_arm.get('Windows', '-')} |")
                       print()
