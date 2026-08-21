@@ -1,0 +1,25 @@
+[package]
+name = "fitgirl-filekeeper"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+color-eyre = "0.6.5"
+compio = { version = "0.19.2", features = ["polling", "macros"] }
+compio-macros = { version = "0.2.1" }
+spdlog-rs = { version = "0.5.3", default-features = false, features = [
+    "level-debug",
+    "release-level-info",
+    "source-location",
+] }
+wreq = { version = "6.0.0-rc.31", default-features = false, features = [
+    "webpki-roots",
+    "compio-rt",
+    "cookies",
+] }
+wreq-util = { version = "3.0.0-rc.14", features = ["compio-rt"] }
+
+[profile.release]
+lto = true
+panic = "abort"
+codegen-units = 1
