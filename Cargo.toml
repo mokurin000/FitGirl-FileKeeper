@@ -4,14 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-color-eyre = "0.6.5"
 compio = { version = "0.19.2", features = ["polling", "macros"] }
 compio-macros = { version = "0.2.1" }
+
+# Logging & error handling
+color-eyre = "0.6.5"
 spdlog-rs = { version = "0.5.3", default-features = false, features = [
     "level-debug",
     "release-level-info",
     "source-location",
 ] }
+
+# Browser HTTP/TLS emulation
 wreq = { version = "6.0.0-rc.31", default-features = false, features = [
     "webpki-roots",
     "compio-rt",

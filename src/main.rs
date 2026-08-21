@@ -5,6 +5,8 @@ use wreq_util::Emulation;
 
 #[compio::main]
 async fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let client = Client::builder().emulation(Emulation::Chrome149).build()?;
     initialize_cookies(&client).await?;
 
