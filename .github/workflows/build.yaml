@@ -1,0 +1,92 @@
+name: publish-release
+
+on:
+    push:
+        tags:
+            - v*
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: write
+
+jobs:
+    windows:
+        uses: ./.github/workflows/windows.yaml
+
+    macos:
+        uses: ./.github/workflows/macos.yaml
+
+    linux-glibc:
+        uses: ./.github/workflows/linux-glibc.yaml
+
+    release:
+        needs:
+            - windows
+            - macos
+            - linux-glibc
+
+        runs-on: ubuntu-24.04
+
+        steps:
+            - uses: actions/download-artifact@v8
+              with:
+                  path: artifacts
+
+            - name: Generate release notes
+              shell: python
+              run: |
+                  import os
+
+                  tag = "${{ github.ref_name }}"
+                  repo = "${{ github.repository }}"
+
+                  FILES = {
+                      "CLI": [
+                          "fitgirl-filekeeper-linux-x86_64",
+                          "fitgirl-filekeeper-linux-arm64",
+                          "fitgirl-filekeeper-macos-arm64",
+                          "fitgirl-filekeeper-macos-x86_64",
+                          "fitgirl-filekeeper-windows-arm64.exe",
+                          "fitgirl-filekeeper-windows-x86_64.exe",
+                      ],
+                  }
+
+                  OS_MAP = {"linux": "Linux", "macos": "macOS", "windows": "Windows"}
+
+                  def generate_table(prefix, label):
+                      row_x86 = {}
+                      row_arm = {}
+
+                      for fname in FILES[label]:
+                          stem = fname.removeprefix(prefix + "-").removesuffix(".exe")
+                          os_key, arch = stem.rsplit("-", 1)
+                          col = OS_MAP[os_key]
+                          url = f"https://github.com/{repo}/releases/download/{tag}/{fname}"
+                          link = f"[Download]({url})"
+                          if arch == "x86_64":
+                              row_x86[col] = link
+                          elif arch == "arm64":
+                              row_arm[col] = link
+
+                      print(f"## {label}")
+                      print()
+                      print("| Architecture | Linux | macOS | Windows 10 |")
+                      print("|--------------|-------|-------|------------|")
+                      print(f"| x86_64 | {row_x86.get('Linux', '-')} | {row_x86.get('macOS', '-')} | {row_x86.get('Windows', '-')} |")
+                      print(f"| arm64  | {row_arm.get('Linux', '-')} | {row_arm.get('macOS', '-')} | {row_arm.get('Windows', '-')} |")
+                      print()
+
+                  from contextlib import redirect_stdout
+                  with open(os.environ["GITHUB_WORKSPACE"] + "-Release.md", "w") as f:
+                      with redirect_stdout(f):
+                          generate_table("fitgirl-filekeeper", "CLI")
+
+            - uses: softprops/action-gh-release@v3
+              with:
+                  tag_name: ${{ github.ref_name }}
+                  files: artifacts/**/*
+                  body_path: ${{ github.workspace }}-Release.md
+                  prerelease: false
