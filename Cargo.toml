@@ -8,6 +8,7 @@ compio = { version = "0.19.2", features = ["polling", "macros"] }
 compio-macros = { version = "0.2.1" }
 
 # Logging & error handling
+thiserror = "2.0.20"
 color-eyre = "0.6.5"
 spdlog-rs = { version = "0.5.3", default-features = false, features = [
     "level-debug",
@@ -22,6 +23,10 @@ wreq = { version = "6.0.0-rc.31", default-features = false, features = [
     "cookies",
 ] }
 wreq-util = { version = "3.0.0-rc.14", features = ["compio-rt"] }
+
+# Parsers
+http = "1.5.0"
+scraper = "0.27.0"
 
 [profile.release]
 lto = true

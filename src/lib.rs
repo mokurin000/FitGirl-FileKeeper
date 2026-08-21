@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use color_eyre::Result;
 use color_eyre::eyre::eyre;
+use http::Uri;
 use spdlog::info;
 use wreq::header::{CONTENT_TYPE, COOKIE, HeaderValue, LOCATION};
 use wreq::{Client, redirect};
@@ -23,7 +24,28 @@ pub async fn initialize_cookies(client: &Client) -> Result<()> {
     Ok(())
 }
 
-pub async fn extract_direct_link(client: &Client, file_code: &str) -> Result<String> {
+#[derive(Debug, Clone)]
+pub struct DirectFile {
+    pub file_name: String,
+    pub direct_link: String,
+}
+
+pub async fn extract_direct_link_(client: &Client, url: impl AsRef<str>) -> Result<DirectFile> {
+    let uri = url.as_ref().parse::<Uri>()?;
+
+    let mut path_segments = uri.path().split("/");
+    let file_code = path_segments.nth(1).unwrap();
+
+    let file_name = path_segments.next().unwrap().to_string();
+    let direct_link = extract_file(&client, file_code).await?;
+
+    Ok(DirectFile {
+        file_name,
+        direct_link,
+    })
+}
+
+pub async fn extract_file(client: &Client, file_code: &str) -> Result<String> {
     let resp = client
         .post(DOWNLOAD_API)
         .header(CONTENT_TYPE, "application/x-www-form-urlencoded")
@@ -43,3 +65,6 @@ pub async fn extract_direct_link(client: &Client, file_code: &str) -> Result<Str
 
     Ok(direct_link.ok_or_else(|| eyre!("Direct link was missing!"))?)
 }
+
+pub mod errors;
+pub mod scrape;
