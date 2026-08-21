@@ -1,12 +1,13 @@
-use std::sync::Arc;
+use std::fmt::Write as _;
+use std::fs::{OpenOptions, create_dir_all};
+use std::io::Write;
+use std::path::PathBuf;
 
 use argh::FromArgs;
 use color_eyre::Result;
 use fitgirl_filekeeper::scrape::scrape_game;
 use fitgirl_filekeeper::{DirectFile, extract_direct_link, initialize_cookies};
 use inquire::MultiSelect;
-use spdlog::sink::StdStreamSink;
-use spdlog::terminal_style::StyleMode;
 use spdlog::{error, info};
 use wreq::Client;
 use wreq_util::Emulation;
@@ -15,20 +16,10 @@ use wreq_util::Emulation;
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
-    let stderr_sink = StdStreamSink::builder()
-        .stderr()
-        .style_mode(StyleMode::Always)
-        .build()
-        .unwrap();
-    let logger = spdlog::Logger::builder()
-        .sink(Arc::new(stderr_sink))
-        .build()
-        .unwrap();
-    spdlog::set_default_logger(Arc::new(logger));
-
     let Args {
         version,
         fitgirl_url,
+        output_dir,
     } = argh::from_env();
 
     if version {
@@ -73,6 +64,7 @@ async fn main() -> Result<()> {
 
     initialize_cookies(&client).await?;
 
+    let mut output = String::new();
     for url in filekeeper_urls {
         let DirectFile {
             file_name,
@@ -87,12 +79,21 @@ async fn main() -> Result<()> {
 
         info!("Extracted: {file_name}");
 
-        println!(
+        writeln!(
+            &mut output,
             "{direct_link}
     out={slug}/{file_name}
     continue=true"
-        );
+        )?;
     }
+
+    create_dir_all(&output_dir)?;
+    OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(output_dir.join(slug).with_extension("txt"))?
+        .write_all(output.as_bytes())?;
 
     Ok(())
 }
@@ -100,11 +101,15 @@ async fn main() -> Result<()> {
 #[derive(FromArgs)]
 /// Reach new heights.
 struct Args {
-    /// show version and exit
+    /// show version and exit.
     #[argh(switch, short = 'V')]
     version: bool,
 
-    /// fitgirl game to scrape
+    /// directory to generate aria2 input files.
+    #[argh(option, short = 'o', default = "PathBuf::from(\"./aria2\")")]
+    output_dir: PathBuf,
+
+    /// fitgirl game url to scrape.
     #[argh(positional)]
     fitgirl_url: String,
 }
