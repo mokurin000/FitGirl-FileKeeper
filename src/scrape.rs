@@ -1,4 +1,7 @@
+use std::collections::BTreeMap;
+
 use scraper::Selector;
+use spdlog::info;
 use wreq::{Client, Uri};
 
 use compio::runtime::spawn_blocking;
@@ -13,7 +16,6 @@ pub struct GameInfo {
 
 pub async fn scrape_game(client: &Client, url: impl AsRef<str>) -> Result<GameInfo, ScrapeError> {
     let url: Uri = url.as_ref().parse()?;
-
     let path_slug = url
         .path()
         .split("/")
@@ -21,6 +23,8 @@ pub async fn scrape_game(client: &Client, url: impl AsRef<str>) -> Result<GameIn
         .next()
         .ok_or(ScrapeError::UnexpectedURL)?
         .to_string();
+
+    info!("Scraping: {path_slug}");
 
     let resp = client
         .get(url)
@@ -91,5 +95,24 @@ fn parse_html(document: impl AsRef<str>) -> Result<Vec<String>, ScrapeError> {
             results.dedup();
             Ok(results)
         }
+    }
+}
+
+impl GameInfo {
+    pub fn grouped(&self) -> BTreeMap<&str, Vec<&str>> {
+        let mut groups = BTreeMap::<&str, Vec<&str>>::new();
+
+        for link in &self.filekeeper_links {
+            let link = &**link;
+
+            // Validated before construction
+            let group = link.split("/").last().unwrap();
+            let group = group.split_once(".part").map(|(a, _)| a).unwrap_or(group);
+            let group = group.strip_suffix(".bin").unwrap_or(group);
+            let group = group.strip_suffix(".rar").unwrap_or(group);
+            groups.entry(group).or_insert(Default::default()).push(link);
+        }
+
+        groups
     }
 }

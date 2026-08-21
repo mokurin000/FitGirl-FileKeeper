@@ -13,7 +13,6 @@ color-eyre = "0.6.5"
 spdlog-rs = { version = "0.5.3", default-features = false, features = [
     "level-debug",
     "release-level-info",
-    "source-location",
 ] }
 
 # Browser HTTP/TLS emulation
@@ -28,6 +27,7 @@ wreq-util = { version = "3.0.0-rc.14", features = ["compio-rt"] }
 http = "1.5.0"
 scraper = "0.27.0"
 argh = { version = "0.1.19", default-features = false, features = ["fuzzy_search", "help"] }
+inquire = { version = "0.9.4", default-features = false, features = ["crossterm"] }
 
 [profile.release]
 lto = true
