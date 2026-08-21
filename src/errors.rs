@@ -5,8 +5,8 @@ use thiserror::Error;
 pub enum ScrapeError {
     #[error("IP banned by ddos-guard")]
     DDoSGuarded,
-    #[error("FuckingFast hoster links not found")]
-    FuckingFastSourceMissing,
+    #[error("FileKeeper hoster links not found")]
+    FileKeeperSourceMissing,
     #[error("URL must refers to a single game")]
     UnexpectedURL,
     #[error("http: {0}")]

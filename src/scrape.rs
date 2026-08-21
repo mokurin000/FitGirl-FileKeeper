@@ -1,4 +1,3 @@
-use http::header::SERVER;
 use scraper::Selector;
 use wreq::{Client, Uri};
 
@@ -9,7 +8,7 @@ use crate::errors::ScrapeError;
 #[derive(Debug, Clone)]
 pub struct GameInfo {
     pub path_part: String,
-    pub fuckingfast_links: Vec<String>,
+    pub filekeeper_links: Vec<String>,
 }
 
 pub async fn scrape_game(client: &Client, url: impl AsRef<str>) -> Result<GameInfo, ScrapeError> {
@@ -18,7 +17,8 @@ pub async fn scrape_game(client: &Client, url: impl AsRef<str>) -> Result<GameIn
     let path_slug = url
         .path()
         .split("/")
-        .nth(1)
+        .filter(|s| !s.is_empty())
+        .next()
         .ok_or(ScrapeError::UnexpectedURL)?
         .to_string();
 
@@ -29,11 +29,7 @@ pub async fn scrape_game(client: &Client, url: impl AsRef<str>) -> Result<GameIn
         .map_err(|e| ScrapeError::RequestError(e.to_string()))?;
 
     // Should not block ISP ip now
-    if resp
-        .headers()
-        .get(SERVER)
-        .is_some_and(|server| server.as_bytes() == b"ddos-guard")
-    {
+    if resp.status() == 403 {
         return Err(ScrapeError::DDoSGuarded);
     }
 
@@ -42,13 +38,13 @@ pub async fn scrape_game(client: &Client, url: impl AsRef<str>) -> Result<GameIn
         .await
         .map_err(|e| ScrapeError::RequestError(e.to_string()))?;
 
-    let fuckingfast_links = spawn_blocking(move || parse_html(document))
+    let filekeeper_links = spawn_blocking(move || parse_html(document))
         .await
         .map_err(|_| ScrapeError::JoinError)??;
 
     Ok(GameInfo {
         path_part: path_slug,
-        fuckingfast_links,
+        filekeeper_links,
     })
 }
 
@@ -56,31 +52,30 @@ fn parse_html(document: impl AsRef<str>) -> Result<Vec<String>, ScrapeError> {
     let document = document.as_ref();
     let document = scraper::Html::parse_document(document);
 
-    let file_hoster = Selector::parse("div.entry-content ul > li:nth-child(2) > a")?;
+    let file_hoster = Selector::parse("div.entry-content ul > li:nth-child(3) > a")?;
     let tags = document
         .select(&file_hoster)
         .filter(|tag| {
             tag.text()
                 .collect::<String>()
-                .contains("FileHoster: FuckingFast")
+                .contains("Filehoster: FileKeeper")
         })
         .collect::<Vec<_>>();
 
     let single_tag = match tags.len() {
-        0 => return Err(ScrapeError::FuckingFastSourceMissing)?,
+        0 => return Err(ScrapeError::FileKeeperSourceMissing)?,
         _ => tags[0],
     };
 
-    let file_hoster_spolier = Selector::parse(
-        "div.entry-content ul > li:nth-child(2) > div.su-spoiler > div.su-spoiler-content",
-    )?;
+    let file_hoster_spolier =
+        Selector::parse("div.entry-content ul > div.su-spoiler > div.su-spoiler-content")?;
 
     let spoiler_content = document.select(&file_hoster_spolier).collect::<Vec<_>>();
     match &*spoiler_content {
         &[] => Ok(vec![
             single_tag
                 .attr("href")
-                .ok_or(ScrapeError::FuckingFastSourceMissing)?
+                .ok_or(ScrapeError::FileKeeperSourceMissing)?
                 .to_string(),
         ]),
         spoilers => {
@@ -93,7 +88,6 @@ fn parse_html(document: impl AsRef<str>) -> Result<Vec<String>, ScrapeError> {
                         .map(str::to_string),
                 );
             }
-            results.sort_unstable();
             results.dedup();
             Ok(results)
         }

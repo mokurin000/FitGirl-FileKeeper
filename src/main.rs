@@ -1,5 +1,8 @@
+use argh::FromArgs;
 use color_eyre::Result;
-use fitgirl_filekeeper::{DirectFile, extract_direct_link, initialize_cookies};
+use fitgirl_filekeeper::initialize_cookies;
+use fitgirl_filekeeper::scrape::scrape_game;
+use spdlog::error;
 use wreq::Client;
 use wreq_util::Emulation;
 
@@ -7,15 +10,37 @@ use wreq_util::Emulation;
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
+    let Args {
+        version,
+        fitgirl_url,
+    } = argh::from_env();
+
+    if version {
+        eprintln!("{} v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
+    if !fitgirl_url.starts_with("https://fitgirl-repacks.site") {
+        error!("Invalid FitGirl-Repacks URL found!");
+    }
+
     let client = Client::builder().emulation(Emulation::Chrome149).build()?;
     initialize_cookies(&client).await?;
 
-    let url = "https://filekeeper.net/mo1aao8ranw3/DRIVE_Rally_--_fitgirl-repacks.site_--_.rar";
-    let DirectFile {
-        file_name,
-        direct_link,
-    } = extract_direct_link(&client, url).await?;
-    println!("{file_name}: {direct_link}");
+    let game_info = scrape_game(&client, fitgirl_url).await?;
+    eprintln!("{game_info:#?}");
 
     Ok(())
+}
+
+#[derive(FromArgs)]
+/// Reach new heights.
+struct Args {
+    /// show version and exit
+    #[argh(switch, short = 'V')]
+    version: bool,
+
+    /// fitgirl game to scrape
+    #[argh(positional)]
+    fitgirl_url: String,
 }

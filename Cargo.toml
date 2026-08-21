@@ -27,6 +27,7 @@ wreq-util = { version = "3.0.0-rc.14", features = ["compio-rt"] }
 # Parsers
 http = "1.5.0"
 scraper = "0.27.0"
+argh = { version = "0.1.19", default-features = false, features = ["fuzzy_search", "help"] }
 
 [profile.release]
 lto = true
