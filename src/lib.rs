@@ -30,7 +30,7 @@ pub struct DirectFile {
     pub direct_link: String,
 }
 
-pub async fn extract_direct_link_(client: &Client, url: impl AsRef<str>) -> Result<DirectFile> {
+pub async fn extract_direct_link(client: &Client, url: impl AsRef<str>) -> Result<DirectFile> {
     let uri = url.as_ref().parse::<Uri>()?;
 
     let mut path_segments = uri.path().split("/");

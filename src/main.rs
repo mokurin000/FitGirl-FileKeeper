@@ -1,5 +1,5 @@
 use color_eyre::Result;
-use fitgirl_filekeeper::{DirectFile, extract_direct_link_, initialize_cookies};
+use fitgirl_filekeeper::{DirectFile, extract_direct_link, initialize_cookies};
 use wreq::Client;
 use wreq_util::Emulation;
 
@@ -14,7 +14,7 @@ async fn main() -> Result<()> {
     let DirectFile {
         file_name,
         direct_link,
-    } = extract_direct_link_(&client, url).await?;
+    } = extract_direct_link(&client, url).await?;
     println!("{file_name}: {direct_link}");
 
     Ok(())
