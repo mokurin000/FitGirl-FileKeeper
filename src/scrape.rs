@@ -56,7 +56,7 @@ fn parse_html(document: impl AsRef<str>) -> Result<Vec<String>, ScrapeError> {
     let document = document.as_ref();
     let document = scraper::Html::parse_document(document);
 
-    let file_hoster = Selector::parse("div.entry-content ul > li:nth-child(3) > a")?;
+    let file_hoster = Selector::parse("div.entry-content ul > li > a")?;
     let tags = document
         .select(&file_hoster)
         .filter(|tag| {
@@ -71,11 +71,9 @@ fn parse_html(document: impl AsRef<str>) -> Result<Vec<String>, ScrapeError> {
         _ => tags[0],
     };
 
-    let file_hoster_spolier =
-        Selector::parse("div.entry-content ul > div.su-spoiler > div.su-spoiler-content")?;
-
-    let spoiler_content = document.select(&file_hoster_spolier).collect::<Vec<_>>();
-    match &*spoiler_content {
+    let spolier_atags = Selector::parse("div.su-spoiler > div.su-spoiler-content > a")?;
+    let spolier_atags = document.select(&spolier_atags).collect::<Vec<_>>();
+    match &*spolier_atags {
         &[] => Ok(vec![
             single_tag
                 .attr("href")
@@ -84,11 +82,10 @@ fn parse_html(document: impl AsRef<str>) -> Result<Vec<String>, ScrapeError> {
         ]),
         spoilers => {
             let mut results = Vec::new();
-            for spoiler in spoilers {
+            for tag in spoilers {
                 results.extend(
-                    spoiler
-                        .select(&Selector::parse("a")?)
-                        .filter_map(|tag| tag.attr("href"))
+                    tag.attr("href")
+                        .filter(|url| url.starts_with("https://filekeeper.net/"))
                         .map(str::to_string),
                 );
             }
