@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use scraper::Selector;
 use spdlog::info;
-use wreq::{Client, Uri};
+use wreq::{Client, Uri, redirect::Policy};
 
 use compio::runtime::spawn_blocking;
 
@@ -28,6 +28,7 @@ pub async fn scrape_game(client: &Client, url: impl AsRef<str>) -> Result<GameIn
 
     let resp = client
         .get(url)
+        .redirect(Policy::default())
         .send()
         .await
         .map_err(|e| ScrapeError::RequestError(e.to_string()))?;
