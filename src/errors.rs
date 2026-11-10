@@ -19,8 +19,8 @@ pub enum ScrapeError {
     InvalidURI(#[from] http::uri::InvalidUri),
 }
 
-impl From<SelectorErrorKind<'_>> for ScrapeError {
-    fn from(_: SelectorErrorKind<'_>) -> Self {
+impl From<SelectorErrorKind> for ScrapeError {
+    fn from(_: SelectorErrorKind) -> Self {
         Self::InvalidCSSSelector
     }
 }

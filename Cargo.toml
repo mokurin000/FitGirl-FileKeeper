@@ -1,11 +1,11 @@
 [package]
 name = "fitgirl-filekeeper"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 [dependencies]
 compio = { version = "0.19.2", features = ["polling", "macros"] }
-compio-macros = { version = "0.2.1" }
+compio-macros = { version = "0.2.2" }
 
 # Logging & error handling
 thiserror = "2.0.20"
@@ -16,18 +16,23 @@ spdlog-rs = { version = "0.5.3", default-features = false, features = [
 ] }
 
 # Browser HTTP/TLS emulation
-wreq = { version = "6.0.0-rc.31", default-features = false, features = [
+wreq = { version = "0.16.3", default-features = false, features = [
     "webpki-roots",
     "compio-rt",
     "cookies",
 ] }
-wreq-util = { version = "3.0.0-rc.14", features = ["compio-rt"] }
+wreq-util = { version = "0.2.1", features = ["compio-rt"] }
 
 # Parsers
 http = "1.5.0"
-scraper = "0.27.0"
-argh = { version = "0.1.19", default-features = false, features = ["fuzzy_search", "help"] }
-inquire = { version = "0.9.4", default-features = false, features = ["crossterm"] }
+scraper = "0.29.0"
+argh = { version = "0.1.19", default-features = false, features = [
+    "fuzzy_search",
+    "help",
+] }
+inquire = { version = "0.9.4", default-features = false, features = [
+    "crossterm",
+] }
 
 [profile.release]
 lto = true
