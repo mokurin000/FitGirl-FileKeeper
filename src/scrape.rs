@@ -72,7 +72,7 @@ fn parse_html(document: impl AsRef<str>) -> Result<Vec<String>, ScrapeError> {
         _ => tags[0],
     };
 
-    let spolier_atags = Selector::parse("div.su-spoiler > div.su-spoiler-content > a")?;
+    let spolier_atags = Selector::parse("div.su-spoiler > div.su-spoiler-content a")?;
     let spolier_atags = document.select(&spolier_atags).collect::<Vec<_>>();
     match &*spolier_atags {
         &[] => Ok(vec![
